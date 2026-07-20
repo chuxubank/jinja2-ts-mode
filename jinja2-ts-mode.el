@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: languages, templates, jinja2, tree-sitter
 ;; URL: https://github.com/chuxubank/jinja2-ts-mode
@@ -223,4 +223,8 @@ The value has the same form as the cdr of an entry in
              '("\\.\\(?:j2\\|jinja\\|jinja2\\)\\'" . jinja2-ts-mode))
 
 (provide 'jinja2-ts-mode)
+
+(with-eval-after-load 'treesit-fold
+  (require 'jinja2-ts-mode-treesit-fold))
+
 ;;; jinja2-ts-mode.el ends here

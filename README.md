@@ -2,7 +2,9 @@
 
 `jinja2-ts-mode` is an Emacs 29+ tree-sitter major mode for Jinja and
 Jinja2 templates. It provides semantic font locking, block indentation,
-comments, defun navigation, and Imenu entries for macros and blocks.
+comments, defun navigation, Imenu entries for macros and blocks, and optional
+`treesit-fold` ranges. The folding integration loads automatically when
+`treesit-fold` is available.
 
 The mode uses the [`jinja`](https://github.com/cathaysia/tree-sitter-jinja)
 grammar. That grammar exposes structured expressions, function calls,
@@ -42,4 +44,3 @@ and runs the ERT test suite.
 
 GPL-3.0-or-later. The tree-sitter grammar is a separate project and is not
 bundled with this package.
-

@@ -4,6 +4,7 @@
 
 (require 'ert)
 (require 'jinja2-ts-mode)
+(require 'jinja2-ts-mode-treesit-fold)
 
 (defun jinja2-ts-mode-test--face-at (text)
   "Return the face on the final character of TEXT in the current buffer."
@@ -119,6 +120,26 @@
                      'font-lock-warning-face))))
           (kill-buffer indirect))))))
 
+(ert-deftest jinja2-ts-mode-registers-treesit-fold-ranges ()
+  (let ((ranges (alist-get 'jinja2-ts-mode treesit-fold-range-alist)))
+    (dolist (type '(autoescape_block block_block call_block filter_block
+                    for_block if_block macro_block raw_block set_block
+                    trans_block with_block))
+      (should (eq (alist-get type ranges)
+                  #'jinja2-ts-mode-treesit-fold-range-block)))))
+
+(ert-deftest jinja2-ts-mode-computes-treesit-fold-range ()
+  (skip-unless (treesit-ready-p 'jinja))
+  (with-temp-buffer
+    (insert "{% if enabled %}\nbody\n{% endif %}")
+    (jinja2-ts-mode)
+    (let* ((node (treesit-search-subtree
+                  (treesit-buffer-root-node 'jinja) "if_block"))
+           (range (jinja2-ts-mode-treesit-fold-range-block
+                   node '(0 . 0))))
+      (should (equal (buffer-substring-no-properties
+                      (car range) (cdr range))
+                     "\nbody\n")))))
+
 (provide 'jinja2-ts-mode-test)
 ;;; jinja2-ts-mode-test.el ends here
-
