@@ -9,7 +9,8 @@
 ;;; Code:
 
 (require 'treesit)
-(require 'treesit-fold)
+
+(defvar treesit-fold-range-alist)
 
 (defun jinja2-ts-mode-treesit-fold-range-block (node offset)
   "Return the fold range for Jinja block NODE using OFFSET."

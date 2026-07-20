@@ -4,6 +4,8 @@
 
 (require 'ert)
 (require 'jinja2-ts-mode)
+(eval-and-compile
+  (defvar treesit-fold-range-alist nil))
 (require 'jinja2-ts-mode-treesit-fold)
 
 (defun jinja2-ts-mode-test--face-at (text)
@@ -24,6 +26,46 @@
   (cl-letf (((symbol-function 'treesit-install-language-grammar)
              (lambda (language) language)))
     (should (eq (jinja2-ts-mode-install-grammar) 'jinja))))
+
+(ert-deftest jinja2-ts-mode-customizes-grammar-source-for-installation ()
+  (let ((original-source jinja2-ts-mode-grammar-source)
+        (custom-source '("https://example.invalid/tree-sitter-jinja"
+                         "verified-revision"
+                         "grammar/src"))
+        installed-source)
+    (unwind-protect
+        (progn
+          (setopt jinja2-ts-mode-grammar-source custom-source)
+          (cl-letf (((symbol-function 'treesit-install-language-grammar)
+                     (lambda (language &rest _)
+                       (setq installed-source
+                             (alist-get language
+                                        treesit-language-source-alist)))))
+            (jinja2-ts-mode-install-grammar))
+          (should (equal installed-source custom-source)))
+      (setopt jinja2-ts-mode-grammar-source original-source))))
+
+(ert-deftest jinja2-ts-mode-installs-grammar-source-set-with-setq ()
+  (let ((original-source jinja2-ts-mode-grammar-source)
+        (original-registered-source
+         (alist-get 'jinja treesit-language-source-alist))
+        (custom-source '("https://example.invalid/tree-sitter-jinja"
+                         "setq-revision"
+                         "grammar/src"))
+        installed-source)
+    (unwind-protect
+        (progn
+          (setq jinja2-ts-mode-grammar-source custom-source)
+          (cl-letf (((symbol-function 'treesit-install-language-grammar)
+                     (lambda (language &rest _)
+                       (setq installed-source
+                             (alist-get language
+                                        treesit-language-source-alist)))))
+            (jinja2-ts-mode-install-grammar))
+          (should (equal installed-source custom-source)))
+      (setq jinja2-ts-mode-grammar-source original-source)
+      (setf (alist-get 'jinja treesit-language-source-alist)
+            original-registered-source))))
 
 (ert-deftest jinja2-ts-mode-activates-without-installed-grammar ()
   (with-temp-buffer

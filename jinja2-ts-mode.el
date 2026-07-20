@@ -4,7 +4,7 @@
 
 ;; Author: Misaka <chuxubank@qq.com>
 ;; Maintainer: Misaka <chuxubank@qq.com>
-;; Version: 0.1.1
+;; Version: 0.1.2
 ;; Package-Requires: ((emacs "29.1"))
 ;; Keywords: languages, templates, jinja2, tree-sitter
 ;; URL: https://github.com/chuxubank/jinja2-ts-mode
@@ -33,6 +33,11 @@
   :safe #'integerp
   :group 'jinja2-ts)
 
+(defun jinja2-ts-mode--set-grammar-source (symbol source)
+  "Set SYMBOL to SOURCE and register it for the `jinja' grammar."
+  (set-default symbol source)
+  (setf (alist-get 'jinja treesit-language-source-alist) source))
+
 (defcustom jinja2-ts-mode-grammar-source
   '("https://github.com/cathaysia/tree-sitter-jinja"
     "v0.13.0"
@@ -41,10 +46,8 @@
 The value has the same form as the cdr of an entry in
 `treesit-language-source-alist'."
   :type '(repeat string)
+  :set #'jinja2-ts-mode--set-grammar-source
   :group 'jinja2-ts)
-
-(add-to-list 'treesit-language-source-alist
-             (cons 'jinja jinja2-ts-mode-grammar-source))
 
 (defvar jinja2-ts-mode--syntax-table
   (let ((table (make-syntax-table)))
@@ -183,6 +186,8 @@ The value has the same form as the cdr of an entry in
 (defun jinja2-ts-mode-install-grammar ()
   "Install or update the `jinja' tree-sitter grammar."
   (interactive)
+  (setf (alist-get 'jinja treesit-language-source-alist)
+        jinja2-ts-mode-grammar-source)
   (treesit-install-language-grammar 'jinja))
 
 ;;;###autoload

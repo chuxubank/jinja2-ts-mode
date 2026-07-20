@@ -1,23 +1,15 @@
 EMACS ?= emacs
 BATCH = $(EMACS) -Q --batch
 LOAD_PATH = -L . -L test
+LOAD_SETUP = --eval "(setq load-prefer-newer t)"
 GRAMMAR_DIR ?= $(CURDIR)/.tree-sitter
 GRAMMAR_SETUP = --eval "(add-to-list 'treesit-extra-load-path \"$(GRAMMAR_DIR)\")"
-TREESIT_FOLD_URL = https://github.com/emacs-tree-sitter/treesit-fold
 SOURCES = jinja2-ts-mode.el jinja2-ts-mode-treesit-fold.el
+TEST_SOURCES = test/jinja2-ts-mode-test.el
 
-PACKAGE_SETUP = \
-	--eval "(require 'package)" \
-	--eval "(package-initialize)" \
-	--eval "(setq load-prefer-newer t)"
+.PHONY: all install-grammar compile test test-optional-fold clean
 
-.PHONY: all install-deps install-grammar compile test clean
-
-all: install-deps compile test
-
-install-deps:
-	$(BATCH) $(PACKAGE_SETUP) \
-		--eval "(unless (package-installed-p 'treesit-fold) (package-vc-install \"$(TREESIT_FOLD_URL)\"))"
+all: compile test
 
 install-grammar:
 	mkdir -p $(GRAMMAR_DIR)
@@ -28,14 +20,28 @@ install-grammar:
 		--eval "(unless (treesit-language-available-p 'jinja) (treesit-install-language-grammar 'jinja \"$(GRAMMAR_DIR)\"))"
 
 compile:
-	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) \
+	$(BATCH) $(LOAD_PATH) $(LOAD_SETUP) \
 		--eval "(setq byte-compile-error-on-warn t)" \
 		-f batch-byte-compile $(SOURCES)
 
-test: install-grammar
-	$(BATCH) $(LOAD_PATH) $(PACKAGE_SETUP) $(GRAMMAR_SETUP) \
+test: install-grammar test-optional-fold
+	$(BATCH) $(LOAD_PATH) $(LOAD_SETUP) $(GRAMMAR_SETUP) \
 		-l jinja2-ts-mode-test \
 		-f ert-run-tests-batch-and-exit
+
+test-optional-fold:
+	@set -e; tmp=$$(mktemp -d); trap 'rm -rf "$$tmp"' 0; \
+		mkdir "$$tmp/test"; \
+		cp $(SOURCES) "$$tmp"; \
+		cp $(TEST_SOURCES) "$$tmp/test"; \
+		$(BATCH) -L "$$tmp" -L "$$tmp/test" \
+			--eval "(setq byte-compile-error-on-warn t)" \
+			-f batch-byte-compile "$$tmp"/*.el "$$tmp"/test/*.el; \
+		$(BATCH) -L "$$tmp" \
+			--eval "(defvar treesit-fold-range-alist nil)" \
+			--eval "(provide 'treesit-fold)" \
+			-l jinja2-ts-mode \
+			--eval "(unless (alist-get 'jinja2-ts-mode treesit-fold-range-alist) (error \"Jinja2 fold ranges were not registered\"))"
 
 clean:
 	find . -name '*.elc' -delete
