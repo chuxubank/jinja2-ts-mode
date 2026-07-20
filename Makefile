@@ -17,7 +17,7 @@ install-grammar:
 		--eval "(require 'treesit)" \
 		$(GRAMMAR_SETUP) \
 		--eval "(add-to-list 'treesit-language-source-alist '(jinja \"https://github.com/cathaysia/tree-sitter-jinja\" \"v0.13.0\" \"tree-sitter-jinja/src\"))" \
-		--eval "(unless (treesit-language-available-p 'jinja) (treesit-install-language-grammar 'jinja \"$(GRAMMAR_DIR)\"))"
+		--eval "(unless (treesit-language-available-p 'jinja) (condition-case nil (treesit-install-language-grammar 'jinja \"$(GRAMMAR_DIR)\") (wrong-number-of-arguments (treesit-install-language-grammar 'jinja))))"
 
 compile:
 	$(BATCH) $(LOAD_PATH) $(LOAD_SETUP) \
